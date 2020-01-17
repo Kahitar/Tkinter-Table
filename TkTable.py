@@ -54,6 +54,16 @@ class TableRow():
 		for i, button in enumerate(self.buttons):
 			button.grid(row=self.row_index, column=len(self.columns) + i, sticky="nsew", padx=(1,0), pady=(1,0))
 
+	def set_column_widget(self, column, widget):
+		self.columns[column] = widget
+
+		row = self.row_index
+
+		padx = (1,0) if column > 0 else (0,0)
+		pady = (1,0) if row > 0 else (0,0)
+
+		widget.grid(row=row, column=column, sticky="nsew", padx=padx, pady=pady)
+
 	def forget(self):
 		for cell in self.columns:
 			cell.grid_forget()
@@ -192,6 +202,8 @@ class HeadlineEntryTable(TkTable):
 			super().set(0, col, h_entry, is_headline=True)
 		super()._add_row(widget_type=tk.Entry, add_button_callback=self.add_entry_row)
 
+		self.dropdown_vars = dict();
+
 	def empty_table(self):
 		for row in self._rows[2:]:
 			row.forget()
@@ -216,16 +228,27 @@ class HeadlineEntryTable(TkTable):
 		if self.add_row_callback != None:
 			self.add_row_callback(column_values)
 
-	def pop_entries_to_list(self):
+	def make_input_dropdown(self, column, choices, default_choice):
+		str_var = tk.StringVar()
+		str_var.set(default_choice)
+
+		self._rows[1].set_column_widget(column=column, widget=tk.OptionMenu(self, str_var, *choices))
+
+		self.dropdown_vars[column] = str_var
+
+	def pop_inputs_to_list(self):
 		values = []
-		for entry in self._rows[1].columns:
-			values.append(entry.get())
-			entry.delete(first=0, last=tk.END)
+		for i, input_entry in enumerate(self._rows[1].columns):
+			if type(input_entry) == tk.Entry:
+				values.append(input_entry.get())
+				input_entry.delete(first=0, last=tk.END)
+			elif type(input_entry) == tk.OptionMenu:
+				values.append(self.dropdown_vars[i].get())
 
 		return values
 
 	def add_entry_row(self):
-		self.prepend_row(self.pop_entries_to_list())
+		self.prepend_row(self.pop_inputs_to_list())
 
 	def _delete_row(self, row_index):
 		column_values = self.get_row_as_list(row_index)
