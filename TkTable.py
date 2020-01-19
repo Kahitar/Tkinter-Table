@@ -215,7 +215,7 @@ class HeadlineEntryTable(TkTable):
 		# Only change rows with labels, not the row with entries
 		if row == 0:
 			super().set(row, column, value, str_format=str_format, is_headline=is_headline, **kwargs)
-		else:
+		else: # The input row is not counted as a row
 			super().set(row+1, column, value, str_format=str_format, is_headline=is_headline, delete_button_callback=self._delete_row,  **kwargs)
 
 	def prepend_row(self, column_values=list(), str_format="{}", is_headline=False, **kwargs):
@@ -246,6 +246,14 @@ class HeadlineEntryTable(TkTable):
 				values.append(self.dropdown_vars[i].get())
 
 		return values
+
+	def set_inputs(self, values):
+		for i, input_entry in enumerate(self._rows[1].columns):
+			if type(input_entry) == tk.Entry:
+				input_entry.delete(first=0, last=tk.END)
+				input_entry.insert(0, values[i])
+			elif type(input_entry) == tk.OptionMenu:
+				self.dropdown_vars[i].set(values[i])
 
 	def add_entry_row(self):
 		self.prepend_row(self.pop_inputs_to_list())
